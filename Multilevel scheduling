@@ -1,0 +1,54 @@
+#include <stdio.h>
+
+#define MAX_PROCESSES 10
+
+typedef struct { int pid; int arrival_time; int burst_time; } Process;
+
+void fcfs_scheduling(Process queue[], int n, const char *queue_name) { int wait_time[MAX_PROCESSES], turnaround_time[MAX_PROCESSES]; int total_wait_time = 0, total_turnaround_time = 0;
+
+printf("\n%s Queue Scheduling (FCFS):\n", queue_name);
+printf("PID\tArrival\tBurst\tWaiting\tTurnaround\n");
+
+wait_time[0] = 0;
+for (int i = 1; i < n; i++) {
+    wait_time[i] = wait_time[i - 1] + queue[i - 1].burst_time;
+}
+
+for (int i = 0; i < n; i++) {
+    turnaround_time[i] = wait_time[i] + queue[i].burst_time;
+    total_wait_time += wait_time[i];
+    total_turnaround_time += turnaround_time[i];
+    printf("%d\t%d\t%d\t%d\t%d\n", queue[i].pid, queue[i].arrival_time, queue[i].burst_time, wait_time[i], turnaround_time[i]);
+}
+
+printf("Average Waiting Time: %.2f\n", (float)total_wait_time / n);
+printf("Average Turnaround Time: %.2f\n", (float)total_turnaround_time / n);
+
+}
+
+int main() { int n, sys_count = 0, user_count = 0; Process system_queue[MAX_PROCESSES], user_queue[MAX_PROCESSES];
+
+printf("Enter the number of processes: ");
+scanf("%d", &n);
+
+for (int i = 0; i < n; i++) {
+    int type;
+    Process p;
+    printf("Enter Process ID, Arrival Time, Burst Time, and Type (0-System, 1-User) for Process %d: ", i + 1);
+    scanf("%d %d %d %d", &p.pid, &p.arrival_time, &p.burst_time, &type);
+
+    if (type == 0)
+        system_queue[sys_count++] = p;
+    else
+        user_queue[user_count++] = p;
+}
+
+if (sys_count > 0)
+    fcfs_scheduling(system_queue, sys_count, "System");
+if (user_count > 0)
+    fcfs_scheduling(user_queue, user_count, "User");
+
+return 0;
+
+}
+
