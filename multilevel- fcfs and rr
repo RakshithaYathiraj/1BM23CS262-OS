@@ -1,0 +1,137 @@
+#include <stdio.h>
+
+#define MAX_PROCESSES 10
+#define TIME_QUANTUM 3
+
+typedef struct {
+    int pid;
+    int arrival_time;
+    int burst_time;
+    int remaining_time;
+} Process;
+
+// Function to sort processes based on arrival time (Bubble Sort)
+void sort_by_arrival(Process queue[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (queue[j].arrival_time > queue[j + 1].arrival_time) {
+                Process temp = queue[j];
+                queue[j] = queue[j + 1];
+                queue[j + 1] = temp;
+            }
+        }
+    }
+}
+
+// First-Come, First-Served Scheduling
+void fcfs_scheduling(Process queue[], int n, const char *queue_name) {
+    int wait_time[MAX_PROCESSES], turnaround_time[MAX_PROCESSES];
+    int total_wait_time = 0, total_turnaround_time = 0;
+
+    // Sort processes by arrival time before scheduling
+    sort_by_arrival(queue, n);
+
+    printf("\n%s Queue Scheduling (FCFS):\n", queue_name);
+    printf("PID\tArrival\tBurst\tWaiting\tTurnaround\n");
+
+    int completion_time = queue[0].arrival_time;
+    for (int i = 0; i < n; i++) {
+        if (completion_time < queue[i].arrival_time) {
+            completion_time = queue[i].arrival_time; // Idle time handled
+        }
+
+        wait_time[i] = completion_time - queue[i].arrival_time;
+        turnaround_time[i] = wait_time[i] + queue[i].burst_time;
+        completion_time += queue[i].burst_time;
+
+        total_wait_time += wait_time[i];
+        total_turnaround_time += turnaround_time[i];
+
+        printf("%d\t%d\t%d\t%d\t%d\n", queue[i].pid, queue[i].arrival_time, queue[i].burst_time, wait_time[i], turnaround_time[i]);
+    }
+
+    printf("Average Waiting Time: %.2f\n", (float)total_wait_time / n);
+    printf("Average Turnaround Time: %.2f\n", (float)total_turnaround_time / n);
+}
+
+// Round Robin Scheduling with Arrival Time Consideration
+void round_robin_scheduling(Process queue[], int n, const char *queue_name) {
+    int time = 0, remaining = n;
+    int completed = 0;
+    int wait_time[MAX_PROCESSES] = {0}, turnaround_time[MAX_PROCESSES] = {0};
+    int arrival_tracker[MAX_PROCESSES] = {0}; // Keeps track of when processes enter execution
+
+    // Sort processes by arrival time before scheduling
+    sort_by_arrival(queue, n);
+
+    printf("\n%s Queue Scheduling (Round Robin, Time Quantum = %d):\n", queue_name, TIME_QUANTUM);
+    printf("PID\tArrival\tBurst\tCompletion\n");
+
+    while (completed < n) {
+        int executed = 0;
+
+        for (int i = 0; i < n; i++) {
+            if (queue[i].remaining_time > 0 && queue[i].arrival_time <= time) {
+                executed = 1;
+
+                // Record first execution time
+                if (arrival_tracker[i] == 0) {
+                    arrival_tracker[i] = time;
+                }
+
+                int execute_time = (queue[i].remaining_time > TIME_QUANTUM) ? TIME_QUANTUM : queue[i].remaining_time;
+                time += execute_time;
+                queue[i].remaining_time -= execute_time;
+
+                if (queue[i].remaining_time == 0) {
+                    turnaround_time[i] = time - queue[i].arrival_time;
+                    wait_time[i] = turnaround_time[i] - queue[i].burst_time;
+                    printf("%d\t%d\t%d\t%d\n", queue[i].pid, queue[i].arrival_time, queue[i].burst_time, time);
+                    completed++;
+                }
+            }
+        }
+
+        if (!executed) {
+            time++; // If no process executed, move time forward
+        }
+    }
+
+    // Calculate and display average waiting and turnaround times
+    int total_wait_time = 0, total_turnaround_time = 0;
+    for (int i = 0; i < n; i++) {
+        total_wait_time += wait_time[i];
+        total_turnaround_time += turnaround_time[i];
+    }
+
+    printf("Average Waiting Time: %.2f\n", (float)total_wait_time / n);
+    printf("Average Turnaround Time: %.2f\n", (float)total_turnaround_time / n);
+}
+
+int main() {
+    int n, sys_count = 0, user_count = 0;
+    Process system_queue[MAX_PROCESSES], user_queue[MAX_PROCESSES];
+
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    for (int i = 0; i < n; i++) {
+        int type;
+        Process p;
+        printf("Enter Process ID, Arrival Time, Burst Time, and Type (0-System, 1-User) for Process %d: ", i + 1);
+        scanf("%d %d %d %d", &p.pid, &p.arrival_time, &p.burst_time, &type);
+        p.remaining_time = p.burst_time;
+
+        if (type == 0)
+            system_queue[sys_count++] = p;
+        else
+            user_queue[user_count++] = p;
+    }
+
+    if (sys_count > 0)
+        fcfs_scheduling(system_queue, sys_count, "System");
+    if (user_count > 0)
+        round_robin_scheduling(user_queue, user_count, "User");
+
+    return 0;
+}
