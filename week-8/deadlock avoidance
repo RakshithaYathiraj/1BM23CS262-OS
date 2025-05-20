@@ -1,0 +1,102 @@
+#include <stdio.h>
+int main() {
+int n, m, i, j, k;
+printf("Enter the number of processes: ");
+scanf("%d"
+, &n);
+printf("Enter the number of resources: ");
+scanf("%d"
+, &m);
+int allocation[n][m];
+int max[n][m];
+int available[m];
+int need[n][m];
+int finish[n], safeSeq[n], index = 0;
+printf("Enter the Allocation Matrix:\n");
+for (i = 0; i < n; i++)
+{
+for (j = 0; j < m; j++)
+{
+scanf("%d"
+, &allocation[i][j]);
+}
+}
+printf("Enter the MAX Matrix:\n");
+for (i = 0; i < n; i++)
+{
+for (j = 0; j < m; j++)
+{
+scanf("%d"
+, &max[i][j]);
+}
+}
+printf("Enter the Available Resources:\n");
+for (i = 0; i < m; i++)
+{
+scanf("%d"
+, &available[i]);
+}
+for (i = 0; i < n; i++)
+{
+for (j = 0; j < m; j++)
+{
+need[i][j] = max[i][j] - allocation[i][j];
+}
+}
+for (i = 0; i < n; i++)
+{
+finish[i] = 0;
+}
+for (k = 0; k < n; k++)
+{
+for (i = 0; i < n; i++)
+{
+if (finish[i] == 0)
+{
+int flag = 1;
+for (j = 0; j < m; j++)
+{
+if (need[i][j] > available[j])
+{
+flag = 0;
+break;
+}
+}
+{
+if (flag == 1)
+safeSeq[index++] = i;
+for (j = 0; j < m; j++)
+{
+available[j] += allocation[i][j];
+}
+finish[i] = 1;
+}
+}
+}
+}
+int allFinished = 1;
+for (i = 0; i < n; i++)
+{
+if (finish[i] == 0)
+{
+allFinished = 0;
+break;
+}
+}
+{
+if (allFinished)
+printf("Following is the SAFE Sequence:\n");
+for (i = 0; i < n - 1; i++)
+{
+printf("P%d -> "
+, safeSeq[i]);
+}
+printf("P%d\n"
+, safeSeq[n - 1]);
+}
+{
+else
+printf("The system is NOT in a safe state.\n");
+}
+return 0;
+}
